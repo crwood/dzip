@@ -4,6 +4,8 @@ setuptools.setup(
     name="dzip",
     version="0.1",
     description="Make and extract deterministic zip archives.",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     author="Christopher R. Wood",
     license="MIT",
     url="https://github.com/crwood/dzip",
