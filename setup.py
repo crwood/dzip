@@ -5,6 +5,7 @@ setuptools.setup(
     version="0.1",
     description="Make and extract deterministic zip archives.",
     author="Christopher R. Wood",
+    license="MIT",
     url="https://github.com/crwood/dzip",
     keywords="deterministic zip archive",
     classifiers=[
@@ -18,6 +19,7 @@ setuptools.setup(
         "Intended Audience :: System Administrators",
         "License :: DFSG approved",
         "License :: OSI Approved",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
