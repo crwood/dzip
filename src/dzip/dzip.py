@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 "Make and extract deterministic zip archives."
 
 import argparse
