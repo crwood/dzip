@@ -7,7 +7,7 @@ import os
 import stat
 import sys
 from subprocess import CalledProcessError, call
-from time import localtime, mktime
+from time import localtime, mktime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
@@ -21,10 +21,7 @@ def _set_time(path, date_time):
         try:
             os.utime(path, (time, time), follow_symlinks=False)
         except (NotImplementedError, TypeError, OSError):  # Windows, Python 2
-            year, month, day, hour, minute, _, _, _, _ = localtime(time)
-            stamp = ""
-            for t in (year, month, day, hour, minute):  # [[CC]YY]MMDDhhmm
-                stamp += str(t).zfill(2)
+            stamp = strftime("%Y%m%d%H%M", localtime(time))
             try:
                 call(["touch", "-h", "-t", stamp, path])
             except CalledProcessError:
