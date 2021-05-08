@@ -91,15 +91,15 @@ def extract_zipfile(
 
 
 def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
-    paths = [(base_dir + "/", os.path.getmtime(base_dir))]
+    paths = [(base_dir + "/", os.lstat(base_dir).st_mtime)]
     for root, directories, files in os.walk(base_dir):
         for file in files:
             filepath = os.path.join(root, file)
-            mtime = os.path.getmtime(filepath)
+            mtime = os.lstat(filepath).st_mtime
             paths.append((filepath, mtime))
         for directory in directories:
             dirpath = os.path.join(root, directory)
-            mtime = os.path.getmtime(dirpath)
+            mtime = os.lstat(dirpath).st_mtime
             if os.path.islink(dirpath):
                 paths.append((dirpath, mtime))
             else:
