@@ -6,7 +6,7 @@ import hashlib
 import os
 import stat
 import sys
-from subprocess import call
+from subprocess import CalledProcessError, call
 from time import localtime, mktime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
@@ -30,7 +30,7 @@ def _set_time(path, date_time):
                 # to its target). Taken together, this sets the
                 # symlink's atime/mtime to that of its target.
                 call(["touch", "-r", path, "-h", path])
-            except:
+            except CalledProcessError:
                 pass
 
 
@@ -151,7 +151,9 @@ def main():
         if args.match_digest and args.match_digest != digest:
             print(
                 "ERROR: SHA256 hash digest mismatch! "
-                "(expected: {}, received: {})".format(args.match_digest, digest)
+                "(expected: {}, received: {})".format(
+                    args.match_digest, digest
+                )
             )
             return 1
     return 0
