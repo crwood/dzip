@@ -84,6 +84,7 @@ def extract_zipfile(
                     os.symlink(zf.open(member).read(), extracted)
                 else:
                     os.chmod(extracted, attr)
+            date_time = member.date_time
             if not date_time:
                 date_time = member.date_time
             if date_time:
@@ -91,20 +92,23 @@ def extract_zipfile(
 
 
 def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
-    paths = [base_dir + "/"]
+    paths = [(base_dir + "/", os.path.getmtime(base_dir))]
     for root, directories, files in os.walk(base_dir):
         for file in files:
-            paths.append(os.path.join(root, file))
+            filepath = os.path.join(root, file)
+            mtime = os.path.getmtime(filepath)
+            paths.append((filepath, mtime))
         for directory in directories:
             dirpath = os.path.join(root, directory)
+            mtime = os.path.getmtime(dirpath)
             if os.path.islink(dirpath):
-                paths.append(dirpath)
+                paths.append((dirpath, mtime))
             else:
-                paths.append(dirpath + "/")
+                paths.append((dirpath + "/", mtime))
     with ZipFile(os.path.abspath(base_name), "w", ZIP_DEFLATED) as zf:
-        for path in sorted(paths):
+        for path, mtime in sorted(paths):
             zinfo = ZipInfo(path)
-            zinfo.date_time = date_time
+            zinfo.date_time = _date_time(mtime)
             if path.endswith("/"):
                 zinfo.external_attr = (0o755 | stat.S_IFDIR) << 16
                 zf.writestr(zinfo, "")
