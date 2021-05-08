@@ -84,11 +84,10 @@ def extract_zipfile(
                     os.symlink(zf.open(member).read(), extracted)
                 else:
                     os.chmod(extracted, attr)
-            date_time = member.date_time
-            if not date_time:
-                date_time = member.date_time
             if date_time:
                 _set_time(extracted, date_time, use_local_time)
+            else:
+                _set_time(extracted, member.date_time, use_local_time)
 
 
 def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
