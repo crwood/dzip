@@ -11,8 +11,19 @@ from time import localtime, mktime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
+def _date_time(epoch):
+    year, month, day, hour, minute, second, _, _, _ = localtime(epoch)
+    date_time = (year, month, day, hour, minute, second)
+    return date_time
+
+
+def _epoch(date_time):
+    epoch = mktime(date_time + (0, 0, -1))
+    return epoch
+
+
 def _set_time(path, date_time):
-    time = mktime(date_time + (0, 0, -1))
+    time = _epoch(date_time)
     try:
         os.utime(path, (time, time))
     except OSError:
@@ -146,8 +157,7 @@ def main():
     elif epoch:
         time = int(epoch)
     if time:
-        year, month, day, hour, minute, second, _, _, _ = localtime(time)
-        date_time = (year, month, day, hour, minute, second)
+        date_time = _date_time(time)
         if args.extract:
             extract_zipfile(
                 args.zipfile,
