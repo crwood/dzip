@@ -21,15 +21,12 @@ def _set_time(path, date_time):
         try:
             os.utime(path, (time, time), follow_symlinks=False)
         except (NotImplementedError, TypeError, OSError):  # Windows, Python 2
+            year, month, day, hour, minute, _, _, _, _ = localtime(time)
+            stamp = ""
+            for t in (year, month, day, hour, minute):  # [[CC]YY]MMDDhhmm
+                stamp += str(t).zfill(2)
             try:
-                # On both GNU/Linux and BSD/darwin, the "-r" flag reads
-                # and uses the access and modification times of the
-                # specified file (instead of the current local system
-                # time), while the "-h" (or "--no-dereference") flag
-                # applies the change to the symlink itself (instead of
-                # to its target). Taken together, this sets the
-                # symlink's atime/mtime to that of its target.
-                call(["touch", "-r", path, "-h", path])
+                call(["touch", "-h", "-t", stamp, path])
             except CalledProcessError:
                 pass
 
