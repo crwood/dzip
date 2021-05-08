@@ -87,7 +87,7 @@ def extract_zipfile(
             if not date_time:
                 date_time = member.date_time
             if date_time:
-                _set_time(extracted, date_time)
+                _set_time(extracted, date_time, use_local_time)
 
 
 def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
