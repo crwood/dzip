@@ -27,7 +27,7 @@ def _set_time(path, date_time):
                 # specified file (instead of the current local system
                 # time), while the "-h" (or "--no-dereference") flag
                 # applies the change to the symlink itself (instead of
-                # to its target). Taken together, this sets the 
+                # to its target). Taken together, this sets the
                 # symlink's atime/mtime to that of its target.
                 call(["touch", "-r", path, "-h", path])
             except:
@@ -91,7 +91,6 @@ def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
                     zf.writestr(zinfo, f.read())
 
 
-
 def sha256sum(filepath):
     hasher = hashlib.sha256()
     with open(filepath, "rb") as f:
@@ -107,29 +106,32 @@ def main():
     parser.add_argument("zipfile", help="path to zipfile")
     parser.add_argument("directory", help="target directory")
     parser.add_argument(
-        "-x", "--extract",
+        "-x",
+        "--extract",
         action="store_true",
-        help="extract files from zipfile to directory"
+        help="extract files from zipfile to directory",
     )
     parser.add_argument(
-        "-t", "--time",
+        "-t",
+        "--time",
         action="store",
         metavar="time",
         type=int,
-        help="override atime/mtime of files to given value (in unix seconds)"
+        help="override atime/mtime of files to given value (in unix seconds)",
     )
     parser.add_argument(
-        "-p", "--print-digest",
+        "-p",
+        "--print-digest",
         action="store_true",
-        help="print sha256 hash digest of zipfile to stdout"
+        help="print sha256 hash digest of zipfile to stdout",
     )
     parser.add_argument(
-        "-m", "--match-digest",
+        "-m",
+        "--match-digest",
         action="store",
         metavar="digest",
-        help="fail unless zipfile sha256 hash digest matches given value"
+        help="fail unless zipfile sha256 hash digest matches given value",
     )
-
     args = parser.parse_args()
     if args.time:
         year, month, day, hour, minute, second, _, _, _ = localtime(args.time)
@@ -149,9 +151,7 @@ def main():
         if args.match_digest and args.match_digest != digest:
             print(
                 "ERROR: SHA256 hash digest mismatch! "
-                "(expected: {}, received: {})".format(
-                    args.match_digest, digest
-                )
+                "(expected: {}, received: {})".format(args.match_digest, digest)
             )
             return 1
     return 0
