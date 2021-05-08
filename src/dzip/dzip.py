@@ -6,24 +6,31 @@ import hashlib
 import os
 import stat
 import sys
+from calendar import timegm
 from subprocess import CalledProcessError, call
-from time import localtime, mktime, strftime
+from time import gmtime, localtime, mktime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
-def _date_time(epoch):
-    year, month, day, hour, minute, second, _, _, _ = localtime(epoch)
+def _date_time(epoch, use_local_time=False):
+    if use_local_time:
+        year, month, day, hour, minute, second, _, _, _ = localtime(epoch)
+    else:
+        year, month, day, hour, minute, second, _, _, _ = gmtime(epoch)
     date_time = (year, month, day, hour, minute, second)
     return date_time
 
 
-def _epoch(date_time):
-    epoch = mktime(date_time + (0, 0, -1))
+def _epoch(date_time, use_local_time=False):
+    if use_local_time:
+        epoch = mktime(date_time + (0, 0, -1))
+    else:
+        epoch = timegm(date_time + (0, 0, -1))
     return epoch
 
 
-def _set_time(path, date_time):
-    time = _epoch(date_time)
+def _set_time(path, date_time, use_local_time=False):
+    time = _epoch(date_time, use_local_time)
     try:
         os.utime(path, (time, time))
     except OSError:
@@ -40,7 +47,11 @@ def _set_time(path, date_time):
 
 
 def extract_zipfile(
-    filename, extract_dir, date_time=None, preserve_symlinks=False
+    filename,
+    extract_dir,
+    date_time=None,
+    preserve_symlinks=False,
+    use_local_time=False,
 ):
     try:
         os.makedirs(extract_dir)
