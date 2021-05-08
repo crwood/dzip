@@ -139,8 +139,14 @@ def main():
         help="fail unless zipfile sha256 hash digest matches given value",
     )
     args = parser.parse_args()
+    time = 0
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if args.time:
-        year, month, day, hour, minute, second, _, _, _ = localtime(args.time)
+        time = args.time
+    elif epoch:
+        time = int(epoch)
+    if time:
+        year, month, day, hour, minute, second, _, _, _ = localtime(time)
         date_time = (year, month, day, hour, minute, second)
         if args.extract:
             extract_zipfile(
