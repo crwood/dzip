@@ -34,7 +34,9 @@ def _set_time(path, date_time):
                 pass
 
 
-def extract_zipfile(filename, extract_dir, date_time=None):
+def extract_zipfile(
+    filename, extract_dir, date_time=None, preserve_symlinks=False
+):
     try:
         os.makedirs(extract_dir)
     except OSError:
@@ -49,7 +51,11 @@ def extract_zipfile(filename, extract_dir, date_time=None):
             extracted = zf.extract(member, extract_dir)
             attr = member.external_attr >> 16
             if attr:
-                if stat.S_ISLNK(attr) and hasattr(os, "symlink"):
+                if (
+                    stat.S_ISLNK(attr)
+                    and hasattr(os, "symlink")
+                    and preserve_symlinks
+                ):
                     os.remove(extracted)
                     os.symlink(zf.open(member).read(), extracted)
                 else:
@@ -112,6 +118,12 @@ def main():
         help="extract files from zipfile to directory",
     )
     parser.add_argument(
+        "-s",
+        "--preserve-symlinks",
+        action="store_true",
+        help="preserve/reconstruct symbolic links when extracting files",
+    )
+    parser.add_argument(
         "-t",
         "--time",
         action="store",
@@ -137,11 +149,20 @@ def main():
         year, month, day, hour, minute, second, _, _, _ = localtime(args.time)
         date_time = (year, month, day, hour, minute, second)
         if args.extract:
-            extract_zipfile(args.zipfile, args.directory, date_time)
+            extract_zipfile(
+                args.zipfile,
+                args.directory,
+                date_time,
+                preserve_symlinks=args.preserve_symlinks,
+            )
         else:
             make_zipfile(args.zipfile, args.directory, date_time)
     elif args.extract:
-        extract_zipfile(args.zipfile, args.directory)
+        extract_zipfile(
+            args.zipfile,
+            args.directory,
+            preserve_symlinks=args.preserve_symlinks,
+        )
     else:
         make_zipfile(args.zipfile, args.directory)
     if args.print_digest or args.match_digest:
