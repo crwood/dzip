@@ -28,6 +28,23 @@ def _set_time(path, time):
                 pass
 
 
+def _extract_member(
+    zf, member, extract_dir, time=None, preserve_symlinks=False
+):
+    extracted = zf.extract(member, extract_dir)
+    attr = member.external_attr >> 16
+    if attr:
+        if stat.S_ISLNK(attr) and hasattr(os, "symlink") and preserve_symlinks:
+            os.remove(extracted)
+            os.symlink(zf.open(member).read(), extracted)
+        else:
+            os.chmod(extracted, attr)
+    if time is not None:
+        _set_time(extracted, time)
+    else:
+        _set_time(extracted, timegm(member.date_time + (0, 0, -1)))
+
+
 def extract_zipfile(filename, extract_dir, time=None, preserve_symlinks=False):
     try:
         os.makedirs(extract_dir)
@@ -40,25 +57,10 @@ def extract_zipfile(filename, extract_dir, time=None, preserve_symlinks=False):
         # directories *after* the dirs/files within them have been
         # extracted (and thereby prevents them from being overridden).
         for member in reversed(zf.infolist()):
-            extracted = zf.extract(member, extract_dir)
-            attr = member.external_attr >> 16
-            if attr:
-                if (
-                    stat.S_ISLNK(attr)
-                    and hasattr(os, "symlink")
-                    and preserve_symlinks
-                ):
-                    os.remove(extracted)
-                    os.symlink(zf.open(member).read(), extracted)
-                else:
-                    os.chmod(extracted, attr)
-            if time is not None:
-                _set_time(extracted, time)
-            else:
-                _set_time(extracted, timegm(member.date_time + (0, 0, -1)))
+            _extract_member(zf, member, extract_dir, time, preserve_symlinks)
 
 
-def make_zipfile(base_name, base_dir, time=None):
+def _get_files(base_dir, time=None):
     def get_mtime(path):
         if time is not None:
             return time
@@ -75,26 +77,34 @@ def make_zipfile(base_name, base_dir, time=None):
                 paths.append((dirpath, get_mtime(dirpath)))
             else:
                 paths.append((dirpath + "/", get_mtime(dirpath)))
+    return sorted(paths)
+
+
+def _add_member(zf, path, mtime):
+    zinfo = ZipInfo(path)
+    zinfo.compress_type = ZIP_DEFLATED
+    year, month, day, hour, minute, seconds, _, _, _ = gmtime(mtime)
+    zinfo.date_time = (year, month, day, hour, minute, seconds)
+    if path.endswith("/"):
+        zinfo.external_attr = (0o755 | stat.S_IFDIR) << 16
+        zf.writestr(zinfo, "")
+    elif os.path.islink(path):
+        zinfo.filename = path  # To strip trailing "/" from dirs
+        zinfo.external_attr = (0o755 | stat.S_IFLNK) << 16
+        zf.writestr(zinfo, os.readlink(path))
+    else:
+        if os.access(path, os.X_OK):
+            zinfo.external_attr = (0o755 | stat.S_IFREG) << 16
+        else:
+            zinfo.external_attr = (0o644 | stat.S_IFREG) << 16
+        with open(path, "rb") as f:
+            zf.writestr(zinfo, f.read())
+
+
+def make_zipfile(base_name, base_dir, time=None):
     with ZipFile(os.path.abspath(base_name), "w", allowZip64=True) as zf:
-        for path, mtime in sorted(paths):
-            zinfo = ZipInfo(path)
-            zinfo.compress_type = ZIP_DEFLATED
-            year, month, day, hour, minute, seconds, _, _, _ = gmtime(mtime)
-            zinfo.date_time = (year, month, day, hour, minute, seconds)
-            if path.endswith("/"):
-                zinfo.external_attr = (0o755 | stat.S_IFDIR) << 16
-                zf.writestr(zinfo, "")
-            elif os.path.islink(path):
-                zinfo.filename = path  # To strip trailing "/" from dirs
-                zinfo.external_attr = (0o755 | stat.S_IFLNK) << 16
-                zf.writestr(zinfo, os.readlink(path))
-            else:
-                if os.access(path, os.X_OK):
-                    zinfo.external_attr = (0o755 | stat.S_IFREG) << 16
-                else:
-                    zinfo.external_attr = (0o644 | stat.S_IFREG) << 16
-                with open(path, "rb") as f:
-                    zf.writestr(zinfo, f.read())
+        for path, mtime in _get_files(base_dir, time):
+            _add_member(zf, path, mtime)
 
 
 def sha256sum(filepath):
