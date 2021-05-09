@@ -178,6 +178,10 @@ def main(extract=False):
         time = args.time
     elif epoch:
         time = int(epoch)
+    if time:
+        if time < 315532800 or time > 4354819199:  # 1980-01-01, 2017-12-31
+            print("ERROR: timestamp must be between 315532800 and 4354819199")
+            return 1
     if not args.extract:
         make_zipfile(args.zipfile, args.directory, time=time)
     if args.print_digest or args.match_digest:
