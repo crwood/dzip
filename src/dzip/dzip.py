@@ -63,7 +63,7 @@ def make_zipfile(base_name, base_dir, time=None):
         if time is not None:
             return time
         return os.lstat(path).st_mtime
-    paths = [(base_dir + "/", os.lstat(base_dir).st_mtime)]
+    paths = [(base_dir + "/", get_mtime(base_dir))]
     for root, directories, files in os.walk(base_dir):
         for file in files:
             filepath = os.path.join(root, file)
