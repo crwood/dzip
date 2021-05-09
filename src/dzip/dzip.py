@@ -103,6 +103,15 @@ def sha256sum(filepath):
     return hasher.hexdigest()
 
 
+def compare_digests(a, b):
+    version = sys.version_info
+    if (version.major, version.minor) >= (3, 6):
+        from secrets import compare_digest
+
+        return compare_digest(a, b)
+    return a == b
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__, usage="%(prog)s [options] <zipfile> <directory>"
@@ -143,33 +152,35 @@ def main():
         help="fail unless zipfile sha256 hash digest matches given value",
     )
     args = parser.parse_args()
+    print(args)
     time = None
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if args.time:
         time = args.time
     elif epoch:
         time = int(epoch)
-    if args.extract:
+    if not args.extract:
+        make_zipfile(args.zipfile, args.directory, time=time)
+    if args.print_digest or args.match_digest:
+        digest = sha256sum(args.zipfile)
+        if args.print_digest:
+            print(digest)
+        if args.match_digest:
+            if not compare_digests(digest, args.match_digest):
+                print(
+                    "ERROR: SHA256 hash digest mismatch! "
+                    "(expected: {}, received: {})".format(
+                        args.match_digest, digest
+                    )
+                )
+                return 1
+    elif args.extract:
         extract_zipfile(
             args.zipfile,
             args.directory,
             time=time,
             preserve_symlinks=args.preserve_symlinks,
         )
-    else:
-        make_zipfile(args.zipfile, args.directory, time=time)
-    if args.print_digest or args.match_digest:
-        digest = sha256sum(args.zipfile)
-        if args.print_digest:
-            print(digest)
-        if args.match_digest and args.match_digest != digest:
-            print(
-                "ERROR: SHA256 hash digest mismatch! "
-                "(expected: {}, received: {})".format(
-                    args.match_digest, digest
-                )
-            )
-            return 1
     return 0
 
 
