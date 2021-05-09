@@ -12,19 +12,7 @@ from time import gmtime, localtime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
-def _date_time(epoch):
-    year, month, day, hour, minute, second, _, _, _ = gmtime(epoch)
-    date_time = (year, month, day, hour, minute, second)
-    return date_time
-
-
-def _epoch(date_time):
-    epoch = timegm(date_time + (0, 0, -1))
-    return epoch
-
-
-def _set_time(path, date_time):
-    time = _epoch(date_time)
+def _set_time(path, time):
     try:
         os.utime(path, (time, time))
     except OSError:
@@ -40,12 +28,7 @@ def _set_time(path, date_time):
                 pass
 
 
-def extract_zipfile(
-    filename,
-    extract_dir,
-    date_time=None,
-    preserve_symlinks=False,
-):
+def extract_zipfile(filename, extract_dir, time=None, preserve_symlinks=False):
     try:
         os.makedirs(extract_dir)
     except OSError:
@@ -69,30 +52,33 @@ def extract_zipfile(
                     os.symlink(zf.open(member).read(), extracted)
                 else:
                     os.chmod(extracted, attr)
-            if date_time:
-                _set_time(extracted, date_time)
+            if time is not None:
+                _set_time(extracted, time)
             else:
-                _set_time(extracted, member.date_time)
+                _set_time(extracted, timegm(member.date_time + (0, 0, -1)))
 
 
-def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
+def make_zipfile(base_name, base_dir, time=None):
+    def get_mtime(path):
+        if time is not None:
+            return time
+        return os.lstat(path).st_mtime
     paths = [(base_dir + "/", os.lstat(base_dir).st_mtime)]
     for root, directories, files in os.walk(base_dir):
         for file in files:
             filepath = os.path.join(root, file)
-            mtime = os.lstat(filepath).st_mtime
-            paths.append((filepath, mtime))
+            paths.append((filepath, get_mtime(filepath)))
         for directory in directories:
             dirpath = os.path.join(root, directory)
-            mtime = os.lstat(dirpath).st_mtime
             if os.path.islink(dirpath):
-                paths.append((dirpath, mtime))
+                paths.append((dirpath, get_mtime(dirpath)))
             else:
-                paths.append((dirpath + "/", mtime))
+                paths.append((dirpath + "/", get_mtime(dirpath)))
     with ZipFile(os.path.abspath(base_name), "w", ZIP_DEFLATED) as zf:
         for path, mtime in sorted(paths):
             zinfo = ZipInfo(path)
-            zinfo.date_time = _date_time(mtime)
+            year, month, day, hour, minute, seconds, _, _, _ = gmtime(mtime)
+            zinfo.date_time = (year, month, day, hour, minute, seconds)
             if path.endswith("/"):
                 zinfo.external_attr = (0o755 | stat.S_IFDIR) << 16
                 zf.writestr(zinfo, "")
@@ -157,31 +143,21 @@ def main():
         help="fail unless zipfile sha256 hash digest matches given value",
     )
     args = parser.parse_args()
-    time = 0
+    time = None
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if args.time:
         time = args.time
     elif epoch:
         time = int(epoch)
-    if time:
-        date_time = _date_time(time)
-        if args.extract:
-            extract_zipfile(
-                args.zipfile,
-                args.directory,
-                date_time,
-                preserve_symlinks=args.preserve_symlinks,
-            )
-        else:
-            make_zipfile(args.zipfile, args.directory, date_time)
-    elif args.extract:
+    if args.extract:
         extract_zipfile(
             args.zipfile,
             args.directory,
+            time=time,
             preserve_symlinks=args.preserve_symlinks,
         )
     else:
-        make_zipfile(args.zipfile, args.directory)
+        make_zipfile(args.zipfile, args.directory, time=time)
     if args.print_digest or args.match_digest:
         digest = sha256sum(args.zipfile)
         if args.print_digest:
