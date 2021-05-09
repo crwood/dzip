@@ -8,29 +8,23 @@ import stat
 import sys
 from calendar import timegm
 from subprocess import CalledProcessError, call
-from time import gmtime, localtime, mktime, strftime
+from time import gmtime, localtime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
-def _date_time(epoch, use_local_time=False):
-    if use_local_time:
-        year, month, day, hour, minute, second, _, _, _ = localtime(epoch)
-    else:
-        year, month, day, hour, minute, second, _, _, _ = gmtime(epoch)
+def _date_time(epoch):
+    year, month, day, hour, minute, second, _, _, _ = gmtime(epoch)
     date_time = (year, month, day, hour, minute, second)
     return date_time
 
 
-def _epoch(date_time, use_local_time=False):
-    if use_local_time:
-        epoch = mktime(date_time + (0, 0, -1))
-    else:
-        epoch = timegm(date_time + (0, 0, -1))
+def _epoch(date_time):
+    epoch = timegm(date_time + (0, 0, -1))
     return epoch
 
 
-def _set_time(path, date_time, use_local_time=False):
-    time = _epoch(date_time, use_local_time)
+def _set_time(path, date_time):
+    time = _epoch(date_time)
     try:
         os.utime(path, (time, time))
     except OSError:
@@ -51,7 +45,6 @@ def extract_zipfile(
     extract_dir,
     date_time=None,
     preserve_symlinks=False,
-    use_local_time=False,
 ):
     try:
         os.makedirs(extract_dir)
@@ -77,9 +70,9 @@ def extract_zipfile(
                 else:
                     os.chmod(extracted, attr)
             if date_time:
-                _set_time(extracted, date_time, use_local_time)
+                _set_time(extracted, date_time)
             else:
-                _set_time(extracted, member.date_time, use_local_time)
+                _set_time(extracted, member.date_time)
 
 
 def make_zipfile(base_name, base_dir, date_time=(2021, 1, 1, 0, 0, 0)):
