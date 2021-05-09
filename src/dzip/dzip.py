@@ -171,7 +171,6 @@ def main(extract=False):
     args = parser.parse_args()
     if extract:
         args.extract = True
-    print(args)
     time = None
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if args.time:
