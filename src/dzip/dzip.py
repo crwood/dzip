@@ -29,14 +29,6 @@ def _epoch(date_time, use_local_time=False):
     return epoch
 
 
-def _stamp(epoch, use_local_time=False):
-    if use_local_time:
-        stamp = strftime("%Y%m%d%H%M", localtime(epoch))
-    else:
-        stamp = strftime("%Y%m%d%H%M", gmtime(epoch))
-    return stamp
-
-
 def _set_time(path, date_time, use_local_time=False):
     time = _epoch(date_time, use_local_time)
     try:
@@ -47,7 +39,7 @@ def _set_time(path, date_time, use_local_time=False):
         try:
             os.utime(path, (time, time), follow_symlinks=False)
         except (NotImplementedError, TypeError, OSError):  # Windows, Python 2
-            stamp = _stamp(time, use_local_time=True)
+            stamp = strftime("%Y%m%d%H%M", localtime(time))
             try:
                 call(["touch", "-h", "-t", stamp, path])
             except CalledProcessError:
