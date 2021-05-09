@@ -75,11 +75,10 @@ def make_zipfile(base_name, base_dir, time=None):
                 paths.append((dirpath, get_mtime(dirpath)))
             else:
                 paths.append((dirpath + "/", get_mtime(dirpath)))
-    with ZipFile(
-        os.path.abspath(base_name), "w", ZIP_DEFLATED, allowZip64=True
-    ) as zf:
+    with ZipFile(os.path.abspath(base_name), "w", allowZip64=True) as zf:
         for path, mtime in sorted(paths):
             zinfo = ZipInfo(path)
+            zinfo.compress_type = ZIP_DEFLATED
             year, month, day, hour, minute, seconds, _, _, _ = gmtime(mtime)
             zinfo.date_time = (year, month, day, hour, minute, seconds)
             if path.endswith("/"):
