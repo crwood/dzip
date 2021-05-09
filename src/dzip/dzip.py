@@ -47,7 +47,7 @@ def _set_time(path, date_time, use_local_time=False):
         try:
             os.utime(path, (time, time), follow_symlinks=False)
         except (NotImplementedError, TypeError, OSError):  # Windows, Python 2
-            stamp = _stamp(time, use_local_time)
+            stamp = _stamp(time, use_local_time=True)
             try:
                 call(["touch", "-h", "-t", stamp, path])
             except CalledProcessError:
