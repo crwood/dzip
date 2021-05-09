@@ -64,7 +64,7 @@ def _get_files(base_dir, time=None):
     def get_mtime(path):
         if time is not None:
             return time
-        return os.lstat(path).st_mtime
+        return int(os.lstat(path).st_mtime)
 
     paths = [(base_dir + "/", get_mtime(base_dir))]
     for root, directories, files in os.walk(base_dir):
