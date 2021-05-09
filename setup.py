@@ -45,5 +45,5 @@ setuptools.setup(
     python_requires=">=2.7",
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    entry_points={"console_scripts": ["dzip=dzip:main"]},
+    entry_points={"console_scripts": ["dzip=dzip:main", "dunzip=dzip:dunzip"]},
 )

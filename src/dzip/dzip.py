@@ -113,18 +113,23 @@ def compare_digests(a, b):
     return a == b
 
 
-def main():
+def main(extract=False):
+    if extract:
+        desc = "Extract deterministic zip archives."
+    else:
+        desc = __doc__
     parser = argparse.ArgumentParser(
-        description=__doc__, usage="%(prog)s [options] <zipfile> <directory>"
+        description=desc, usage="%(prog)s [options] <zipfile> <directory>"
     )
     parser.add_argument("zipfile", help="path to zipfile")
     parser.add_argument("directory", help="target directory")
-    parser.add_argument(
-        "-x",
-        "--extract",
-        action="store_true",
-        help="extract files from zipfile to directory",
-    )
+    if not extract:
+        parser.add_argument(
+            "-x",
+            "--extract",
+            action="store_true",
+            help="extract files from zipfile to directory",
+        )
     parser.add_argument(
         "-s",
         "--preserve-symlinks",
@@ -153,6 +158,8 @@ def main():
         help="fail unless zipfile sha256 hash digest matches given value",
     )
     args = parser.parse_args()
+    if extract:
+        args.extract = True
     print(args)
     time = None
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
@@ -183,6 +190,10 @@ def main():
             preserve_symlinks=args.preserve_symlinks,
         )
     return 0
+
+
+def dunzip():
+    main(extract=True)
 
 
 if __name__ == "__main__":
