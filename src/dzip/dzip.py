@@ -124,11 +124,7 @@ def compare_digests(a, b):
     return a == b
 
 
-def main(extract=False):
-    if extract:
-        desc = "Extract deterministic zip archives."
-    else:
-        desc = __doc__
+def main(extract=False, desc=__doc__):
     parser = argparse.ArgumentParser(
         description=desc, usage="%(prog)s [options] <zipfile> <directory>"
     )
@@ -207,7 +203,7 @@ def main(extract=False):
 
 
 def dunzip():
-    main(extract=True)
+    main(extract=True, desc="Extract deterministic zip archives.")
 
 
 if __name__ == "__main__":
