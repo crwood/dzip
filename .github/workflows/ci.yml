@@ -20,9 +20,6 @@ jobs:
     - name: Test
       run: |
         tox
-    - name: Lint
-      run: |
-        python3 -m tox -e lint
   macOS:
     runs-on: macos-latest
     strategy:
@@ -40,9 +37,6 @@ jobs:
     - name: Test
       run: |
         tox
-    - name: Lint
-      run: |
-        python3 -m tox -e lint
   Windows:
     runs-on: windows-latest
     strategy:
@@ -60,6 +54,3 @@ jobs:
     - name: Test
       run: |
         tox
-    - name: Lint
-      run: |
-        python3 -m tox -e lint
