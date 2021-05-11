@@ -53,8 +53,14 @@ def basedir(tmpdir):
     os.utime(exefile, (time, time))
     os.utime(testdir, (time, time))
     if (sys.version_info.major, sys.version_info.minor) > (2, 7):
-        os.utime(file1link, (time, time), follow_symlinks=False)
-        os.utime(subdirlink, (time, time), follow_symlinks=False)
+        try:
+            os.utime(file1link, (time, time), follow_symlinks=False)
+        except NotImplementedError:  # Windows
+            pass
+        try:
+            os.utime(subdirlink, (time, time), follow_symlinks=False)
+        except NotImplementedError:  # Windows
+            pass
     else:  # Windows?
         stamp = strftime("%Y%m%d%H%M.%S", localtime(time))
         call(["touch", "-h", "-t", stamp, file1link])
