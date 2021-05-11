@@ -35,13 +35,13 @@ def basedir(tmpdir):
     file1link = os.path.join(testdir, "file1link")
     try:
         os.symlink("file1.txt", file1link)
-    except NotImplementedError:  # Windows
+    except (AttributeError, NotImplementedError):  # Windows
         pass
 
     subdirlink = os.path.join(testdir, "subdirlink")
     try:
         os.symlink("subdir", subdirlink)
-    except NotImplementedError:  # Windows
+    except (AttributeError, NotImplementedError):  # Windows
         pass
 
     # return str(tmpdir)
@@ -55,11 +55,11 @@ def basedir(tmpdir):
     if (sys.version_info.major, sys.version_info.minor) > (2, 7):
         try:
             os.utime(file1link, (time, time), follow_symlinks=False)
-        except NotImplementedError:  # Windows
+        except (AttributeError, NotImplementedError):  # Windows
             pass
         try:
             os.utime(subdirlink, (time, time), follow_symlinks=False)
-        except NotImplementedError:  # Windows
+        except (AttributeError, NotImplementedError):  # Windows
             pass
     else:  # Windows?
         stamp = strftime("%Y%m%d%H%M.%S", localtime(time))
