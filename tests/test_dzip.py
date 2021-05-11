@@ -86,7 +86,9 @@ def test_make_dzip_is_deterministic_with_time_override(basedir):
 def test_make_dzip_is_deterministic_with_expected_digest(basedir):
     os.chdir(basedir)
     make_zipfile("Test.zip", "Test", time=1234567890)
-    if sys.platform == "win32":
+    if sys.platform == "win32" and sys.version_info.major == 2:
+        d = "c54792299242d3b46c6111e9b6a612dcb7a09105763d22e1bd434320ddc91ad6"
+    elif sys.platform == "win32":
         d = "566f60f6841f69bac9e74fa051a1b9b304d1606403626b6fb5ea7ab7568e91f3"
     else:
         d = "b10992a74a98b63f00fba3e489c0dcd4bfbefc93884b7adb823f890649e08558"
