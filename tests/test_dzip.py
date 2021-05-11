@@ -33,10 +33,16 @@ def basedir(tmpdir):
         f.write("file2content")
 
     file1link = os.path.join(testdir, "file1link")
-    os.symlink("file1.txt", file1link)
+    try:
+        os.symlink("file1.txt", file1link)
+    except NotImplementedError:  # Windows
+        pass
 
     subdirlink = os.path.join(testdir, "subdirlink")
-    os.symlink("subdir", subdirlink)
+    try:
+        os.symlink("subdir", subdirlink)
+    except NotImplementedError:  # Windows
+        pass
 
     # return str(tmpdir)
 
