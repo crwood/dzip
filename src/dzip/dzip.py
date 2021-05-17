@@ -128,7 +128,7 @@ def compare_digests(a, b):
     return a == b
 
 
-def _get_args(extract, desc):
+def _get_args(extract=False, desc=__doc__):
     parser = argparse.ArgumentParser(
         description=desc, usage="%(prog)s [options] <zipfile> <directory>"
     )
