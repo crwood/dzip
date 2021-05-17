@@ -127,7 +127,7 @@ def compare_digests(a, b):
     return a == b
 
 
-def main(extract=False, desc=__doc__):
+def _get_args(extract, desc):
     parser = argparse.ArgumentParser(
         description=desc, usage="%(prog)s [options] <zipfile> <directory>"
     )
@@ -173,6 +173,11 @@ def main(extract=False, desc=__doc__):
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     if epoch and not args.time:  # Let "-t" flag override environment variable
         args.time = int(epoch)
+    return args
+
+
+def main(extract=False, desc=__doc__):
+    args = _get_args(extract, desc)
     if not args.extract:
         try:
             make_zipfile(args.zipfile, args.directory, time=args.time)
