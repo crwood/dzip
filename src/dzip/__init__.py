@@ -1,1 +1,1 @@
-from .dzip import dunzip, extract_zipfile, main, make_zipfile, sha256sum
+from .dzip import create_zipfile, dunzip, extract_zipfile, main, sha256sum

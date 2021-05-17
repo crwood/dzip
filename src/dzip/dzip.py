@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"Make and extract deterministic zip archives."
+"Create and extract deterministic zip archives."
 from __future__ import print_function
 
 import argparse
@@ -102,7 +102,7 @@ def _add_member(zf, path, mtime):
             zf.writestr(zinfo, f.read())
 
 
-def make_zipfile(base_name, base_dir, time=None):
+def create_zipfile(base_name, base_dir, time=None):
     if time and (time < 315532800 or time > 4354819199):
         # 1980-01-01, 2107-12-31
         raise ValueError("Timestamp must be between 315532800 and 4354819199")
@@ -181,7 +181,7 @@ def main(extract=False, desc=__doc__):
     args = _get_args(extract, desc)
     if not args.extract:
         try:
-            make_zipfile(args.zipfile, args.directory, time=args.time)
+            create_zipfile(args.zipfile, args.directory, time=args.time)
         except Exception as exc:
             print("ERROR: {}".format(exc), file=sys.stderr)
             return 1

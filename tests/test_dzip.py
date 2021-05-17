@@ -6,7 +6,7 @@ from time import localtime, strftime
 
 import pytest
 
-from dzip import extract_zipfile, make_zipfile, sha256sum
+from dzip import create_zipfile, extract_zipfile, sha256sum
 from dzip.dzip import compare_digests
 
 
@@ -69,23 +69,23 @@ def basedir(tmpdir):
     return str(tmpdir)
 
 
-def test_make_dzip_is_deterministic(basedir):
+def test_create_dzip_is_deterministic(basedir):
     os.chdir(basedir)
-    make_zipfile("1.zip", "Test")
-    make_zipfile("2.zip", "Test")
+    create_zipfile("1.zip", "Test")
+    create_zipfile("2.zip", "Test")
     assert sha256sum("1.zip") == sha256sum("2.zip")
 
 
-def test_make_dzip_is_deterministic_with_time_override(basedir):
+def test_create_dzip_is_deterministic_with_time_override(basedir):
     os.chdir(basedir)
-    make_zipfile("1.zip", "Test", time=1234567890)
-    make_zipfile("2.zip", "Test", time=1234567890)
+    create_zipfile("1.zip", "Test", time=1234567890)
+    create_zipfile("2.zip", "Test", time=1234567890)
     assert sha256sum("1.zip") == sha256sum("2.zip")
 
 
-def test_make_dzip_is_deterministic_with_expected_digest(basedir):
+def test_create_dzip_is_deterministic_with_expected_digest(basedir):
     os.chdir(basedir)
-    make_zipfile("Test.zip", "Test", time=1234567890)
+    create_zipfile("Test.zip", "Test", time=1234567890)
     if sys.platform == "win32" and sys.version_info.major == 2:
         d = "c54792299242d3b46c6111e9b6a612dcb7a09105763d22e1bd434320ddc91ad6"
     elif sys.platform == "win32":
@@ -95,21 +95,21 @@ def test_make_dzip_is_deterministic_with_expected_digest(basedir):
     assert sha256sum("Test.zip") == d
 
 
-def test_make_dzip_output_changes_if_time_changes(basedir):
+def test_create_dzip_output_changes_if_time_changes(basedir):
     os.chdir(basedir)
-    make_zipfile("1.zip", "Test", time=1234567890)
-    make_zipfile("2.zip", "Test", time=987654321)
+    create_zipfile("1.zip", "Test", time=1234567890)
+    create_zipfile("2.zip", "Test", time=987654321)
     assert sha256sum("1.zip") != sha256sum("2.zip")
 
 
 def test_compare_digests(basedir):
     os.chdir(basedir)
-    make_zipfile("1.zip", "Test")
-    make_zipfile("2.zip", "Test")
+    create_zipfile("1.zip", "Test")
+    create_zipfile("2.zip", "Test")
     assert compare_digests(sha256sum("1.zip"), sha256sum("2.zip")) is True
 
 
 def test_extract_dzip(basedir):
     os.chdir(basedir)
-    make_zipfile("Test.zip", "Test", time=1234567890)
+    create_zipfile("Test.zip", "Test", time=1234567890)
     extract_zipfile("Test.zip", "output", preserve_symlinks=True)
