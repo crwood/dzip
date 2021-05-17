@@ -196,12 +196,16 @@ def main(extract=False, desc=__doc__):
                 )
                 return 1
     elif args.extract:
-        extract_zipfile(
-            args.zipfile,
-            args.directory,
-            time=time,
-            preserve_symlinks=args.preserve_symlinks,
-        )
+        try:
+            extract_zipfile(
+                args.zipfile,
+                args.directory,
+                time=time,
+                preserve_symlinks=args.preserve_symlinks,
+            )
+        except Exception as exc:
+            print("ERROR: {}".format(exc))
+            return 1
     return 0
 
 
