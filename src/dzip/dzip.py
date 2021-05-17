@@ -128,7 +128,7 @@ def compare_digests(a, b):
     return a == b
 
 
-def _get_args(extract=False, desc=__doc__):
+def _get_args(extract=False, desc=__doc__, _args_list=None):
     parser = argparse.ArgumentParser(
         description=desc, usage="%(prog)s [options] <zipfile> <directory>"
     )
@@ -168,7 +168,7 @@ def _get_args(extract=False, desc=__doc__):
         metavar="digest",
         help="fail unless zipfile sha256 hash digest matches given value",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(_args_list)
     if extract:
         args.extract = True
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
@@ -177,8 +177,11 @@ def _get_args(extract=False, desc=__doc__):
     return args
 
 
-def main(extract=False, desc=__doc__):
-    args = _get_args(extract, desc)
+def main(extract=False, desc=__doc__, _args=None):
+    if _args:
+        args = _args
+    else:
+        args = _get_args(extract, desc)
     if not args.extract:
         try:
             create_zipfile(args.zipfile, args.directory, time=args.time)
@@ -213,8 +216,14 @@ def main(extract=False, desc=__doc__):
     return 0
 
 
-def dunzip():
-    sys.exit(main(extract=True, desc="Extract deterministic zip archives."))
+def dunzip(_args=None):
+    sys.exit(
+        main(
+            extract=True,
+            desc="Extract deterministic zip archives.",
+            _args=_args,
+        )
+    )
 
 
 if __name__ == "__main__":
