@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 "Make and extract deterministic zip archives."
+from __future__ import print_function
 
 import argparse
 import hashlib
@@ -182,7 +183,7 @@ def main(extract=False, desc=__doc__):
         try:
             make_zipfile(args.zipfile, args.directory, time=args.time)
         except Exception as exc:
-            print("ERROR: {}".format(exc))
+            print("ERROR: {}".format(exc), file=sys.stderr)
             return 1
     if args.print_digest or args.match_digest:
         digest = sha256sum(args.zipfile)
@@ -194,7 +195,8 @@ def main(extract=False, desc=__doc__):
                     "ERROR: SHA256 hash digest mismatch! "
                     "(expected: {}, received: {})".format(
                         args.match_digest, digest
-                    )
+                    ),
+                    file=sys.stderr,
                 )
                 return 1
     elif args.extract:
@@ -206,7 +208,7 @@ def main(extract=False, desc=__doc__):
                 preserve_symlinks=args.preserve_symlinks,
             )
         except Exception as exc:
-            print("ERROR: {}".format(exc))
+            print("ERROR: {}".format(exc), file=sys.stderr)
             return 1
     return 0
 
