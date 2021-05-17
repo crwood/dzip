@@ -170,15 +170,12 @@ def main(extract=False, desc=__doc__):
     args = parser.parse_args()
     if extract:
         args.extract = True
-    time = None
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
-    if args.time:
-        time = args.time
-    elif epoch:
-        time = int(epoch)
+    if epoch and not args.time:  # Let "-t" flag override environment variable
+        args.time = int(epoch)
     if not args.extract:
         try:
-            make_zipfile(args.zipfile, args.directory, time=time)
+            make_zipfile(args.zipfile, args.directory, time=args.time)
         except Exception as exc:
             print("ERROR: {}".format(exc))
             return 1
@@ -200,7 +197,7 @@ def main(extract=False, desc=__doc__):
             extract_zipfile(
                 args.zipfile,
                 args.directory,
-                time=time,
+                time=args.time,
                 preserve_symlinks=args.preserve_symlinks,
             )
         except Exception as exc:
