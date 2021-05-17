@@ -102,6 +102,9 @@ def _add_member(zf, path, mtime):
 
 
 def make_zipfile(base_name, base_dir, time=None):
+    if time and (time < 315532800 or time > 4354819199):
+        # 1980-01-01, 2107-12-31
+        raise ValueError("Timestamp must be between 315532800 and 4354819199")
     with ZipFile(os.path.abspath(base_name), "w", allowZip64=True) as zf:
         for path, mtime in _get_files(base_dir, time):
             _add_member(zf, path, mtime)
@@ -173,12 +176,12 @@ def main(extract=False, desc=__doc__):
         time = args.time
     elif epoch:
         time = int(epoch)
-    if time:
-        if time < 315532800 or time > 4354819199:  # 1980-01-01, 2107-12-31
-            print("ERROR: timestamp must be between 315532800 and 4354819199")
-            return 1
     if not args.extract:
-        make_zipfile(args.zipfile, args.directory, time=time)
+        try:
+            make_zipfile(args.zipfile, args.directory, time=time)
+        except Exception as exc:
+            print("ERROR: {}".format(exc))
+            return 1
     if args.print_digest or args.match_digest:
         digest = sha256sum(args.zipfile)
         if args.print_digest:
