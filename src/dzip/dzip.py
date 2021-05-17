@@ -207,7 +207,7 @@ def main(extract=False, desc=__doc__):
 
 
 def dunzip():
-    main(extract=True, desc="Extract deterministic zip archives.")
+    sys.exit(main(extract=True, desc="Extract deterministic zip archives."))
 
 
 if __name__ == "__main__":
