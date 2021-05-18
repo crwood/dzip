@@ -12,8 +12,8 @@ except ImportError:
 
 import pytest
 
-from dzip import create_zipfile, extract_zipfile, sha256sum
-from dzip.dzip import _get_args, _set_time, compare_digests, dunzip, main
+from dzip import __main__, create_zipfile, dunzip, extract_zipfile, main
+from dzip.dzip import _get_args, _set_time, compare_digests, sha256sum
 
 
 @pytest.fixture
