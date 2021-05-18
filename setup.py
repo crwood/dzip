@@ -1,14 +1,21 @@
+import re
+
 import setuptools
+
+module_file = open("src/dzip/dzip.py").read()
+metadata = dict(re.findall(r"__([a-z_]+)__\s*=\s*\"([^\"]+)\"", module_file))
+
 
 setuptools.setup(
     name="dzip",
-    version="0.1",
-    description="Make and extract deterministic zip archives.",
+    version=metadata["version"],
+    description=metadata["doc"],
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author="Christopher R. Wood",
-    license="MIT",
-    url="https://github.com/crwood/dzip",
+    author=metadata["author"],
+    author_email=metadata["author_email"],
+    license=metadata["license"],
+    url=metadata["url"],
     keywords="deterministic zip archive",
     classifiers=[
         "Development Status :: 3 - Alpha",

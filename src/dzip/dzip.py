@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-"Create and extract deterministic zip archives."
 from __future__ import print_function
 
 import argparse
@@ -12,7 +11,12 @@ from subprocess import CalledProcessError, call
 from time import gmtime, localtime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+__doc__ = "Create and extract deterministic zip archives."
+__author__ = "Christopher R. Wood"
+__author_email__ = "chris@cyberethics.ca"
+__license__ = "MIT"
 __version__ = "0.2"
+__url__ = "https://github.com/crwood/dzip"
 
 
 def _set_time(path, time):
