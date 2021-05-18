@@ -12,6 +12,8 @@ from subprocess import CalledProcessError, call
 from time import gmtime, localtime, strftime
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+__version__ = "0.2"
+
 
 def _set_time(path, time):
     try:
@@ -167,6 +169,9 @@ def _get_args(extract=False, desc=__doc__, _args_list=None):
         action="store",
         metavar="digest",
         help="fail unless zipfile sha256 hash digest matches given value",
+    )
+    parser.add_argument(
+        "-V", "--version", action="version", version="%(prog)s " + __version__
     )
     args = parser.parse_args(_args_list)
     if extract:
