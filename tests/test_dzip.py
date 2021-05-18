@@ -1,7 +1,8 @@
 import os
 import stat
 import sys
-from subprocess import call
+from io import BytesIO, StringIO
+from subprocess import CalledProcessError, call
 from time import localtime, strftime
 
 try:
@@ -12,7 +13,7 @@ except ImportError:
 import pytest
 
 from dzip import create_zipfile, extract_zipfile, sha256sum
-from dzip.dzip import _get_args, compare_digests, dunzip, main
+from dzip.dzip import _get_args, _set_time, compare_digests, dunzip, main
 
 
 @pytest.fixture
@@ -74,21 +75,55 @@ def basedir(tmpdir):
     return str(tmpdir)
 
 
-def test_create_dzip_is_deterministic(basedir):
+def test__set_time_pass_on_called_process_error(monkeypatch, basedir):
+    monkeypatch.setattr("os.utime", Mock(side_effect=OSError))
+    monkeypatch.setattr(
+        "dzip.dzip.call",
+        Mock(side_effect=CalledProcessError(returncode=1, cmd="touch")),
+    )
+    os.chdir(basedir)
+    linkpath = os.path.join("Test", "file1link")
+    _set_time(linkpath, 12345)
+    assert int(os.lstat(linkpath).st_mtime) != 123456
+
+
+def test_extract_zipfile(basedir):
+    os.chdir(basedir)
+    create_zipfile("Test.zip", "Test", time=1234567890)
+    t = 444444444
+    extract_zipfile("Test.zip", "output", time=t, preserve_symlinks=True)
+    assert (
+        int(os.lstat(os.path.join("output", "Test", "test.exe")).st_mtime) == t
+    )
+
+
+def test_create_zipfile_raise_value_error_timestamp_too_low(basedir):
+    os.chdir(basedir)
+    with pytest.raises(ValueError):
+        create_zipfile("Test.zip", "Test", time=315532799)
+
+
+def test_create_zipfile_raise_value_error_timestamp_too_high(basedir):
+    os.chdir(basedir)
+    with pytest.raises(ValueError):
+        create_zipfile("Test.zip", "Test", time=4354819200)
+
+
+def test_create_zipfile_is_deterministic(basedir):
     os.chdir(basedir)
     create_zipfile("1.zip", "Test")
     create_zipfile("2.zip", "Test")
     assert sha256sum("1.zip") == sha256sum("2.zip")
 
 
-def test_create_dzip_is_deterministic_with_time_override(basedir):
+def test_create_zipfile_is_deterministic_with_time_override(basedir):
     os.chdir(basedir)
     create_zipfile("1.zip", "Test", time=1234567890)
     create_zipfile("2.zip", "Test", time=1234567890)
     assert sha256sum("1.zip") == sha256sum("2.zip")
 
 
-def test_create_dzip_is_deterministic_with_expected_digest(basedir):
+def test_create_zipfile_is_deterministic_with_expected_digest(basedir):
     os.chdir(basedir)
     create_zipfile("Test.zip", "Test", time=1234567890)
     if sys.platform == "win32" and sys.version_info.major == 2:
@@ -100,7 +135,7 @@ def test_create_dzip_is_deterministic_with_expected_digest(basedir):
     assert sha256sum("Test.zip") == d
 
 
-def test_create_dzip_output_changes_if_time_changes(basedir):
+def test_create_zipfile_output_changes_if_time_changes(basedir):
     os.chdir(basedir)
     create_zipfile("1.zip", "Test", time=1234567890)
     create_zipfile("2.zip", "Test", time=987654321)
@@ -112,12 +147,6 @@ def test_compare_digests(basedir):
     create_zipfile("1.zip", "Test")
     create_zipfile("2.zip", "Test")
     assert compare_digests(sha256sum("1.zip"), sha256sum("2.zip")) is True
-
-
-def test_extract_dzip(basedir):
-    os.chdir(basedir)
-    create_zipfile("Test.zip", "Test", time=1234567890)
-    extract_zipfile("Test.zip", "output", preserve_symlinks=True)
 
 
 def test__get_args_extract_kwarg_default_is_false():
@@ -134,6 +163,7 @@ def test__get_args_read_source_date_epoch_environment_variable():
     env = os.environ
     env["SOURCE_DATE_EPOCH"] = str(999999999)
     args = _get_args(_args_list=["test.zip", "testdir"])
+    del env["SOURCE_DATE_EPOCH"]
     assert args.time == 999999999
 
 
@@ -141,18 +171,83 @@ def test__get_args_t_flag_overrides_source_date_epoch_environement_variable():
     env = os.environ
     env["SOURCE_DATE_EPOCH"] = str(999999999)
     args = _get_args(_args_list=["-t", "123454321", "test.zip", "testdir"])
+    del env["SOURCE_DATE_EPOCH"]
     assert args.time == 123454321
 
 
-def test_main_create(basedir):
+def test_main_create_zipfile(basedir):
     os.chdir(basedir)
     main(_args=_get_args(_args_list=["TestMainCreate.zip", "Test"]))
     assert os.path.exists("TestMainCreate.zip") is True
 
 
+def test_main_use_real_args(monkeypatch, basedir):
+    monkeypatch.setattr("sys.stderr", Mock())
+    monkeypatch.setattr("sys.exit", Mock())
+    retcode = main()
+    assert retcode == 1
+
+
+def test_main_create_zipfile_return_1_on_error(monkeypatch, basedir):
+    monkeypatch.setattr("sys.stderr", Mock())
+    monkeypatch.setattr(
+        "dzip.dzip.create_zipfile", Mock(side_effect=ValueError)
+    )
+    os.chdir(basedir)
+    rc = main(_args=_get_args(_args_list=["TestMainCreate.zip", "Test"]))
+    assert rc == 1
+
+
+def test_main_extract_zipfile_return_1_on_error(monkeypatch, basedir):
+    monkeypatch.setattr("sys.stderr", Mock())
+    monkeypatch.setattr(
+        "dzip.dzip.extract_zipfile", Mock(side_effect=ValueError)
+    )
+    os.chdir(basedir)
+    rc = main(_args=_get_args(_args_list=["-x", "TestMainCreate.zip", "Test"]))
+    assert rc == 1
+
+
+def test_main_extract_zipfile_into_existing_directory(monkeypatch, basedir):
+    os.chdir(basedir)
+    create_zipfile("Test.zip", "Test", time=888888888)
+    main(_args=_get_args(_args_list=["-x", "Test.zip", "."]))
+    assert (
+        int(os.lstat(os.path.join("Test", "test.exe")).st_mtime) == 888888888
+    )
+
+
+def test_main_create_print_digest(monkeypatch, basedir):
+    if sys.version_info.major == 2:
+        buffer = BytesIO()
+    else:
+        buffer = StringIO()
+    monkeypatch.setattr("sys.stdout", buffer)
+    os.chdir(basedir)
+    a = ["-p", "-t", "1234567890", "TestMainCreate.zip", "Test"]
+    main(_args=_get_args(_args_list=a))
+    printed_digest = buffer.getvalue().strip()
+    if sys.platform == "win32" and sys.version_info.major == 2:
+        d = "c54792299242d3b46c6111e9b6a612dcb7a09105763d22e1bd434320ddc91ad6"
+    elif sys.platform == "win32":
+        d = "566f60f6841f69bac9e74fa051a1b9b304d1606403626b6fb5ea7ab7568e91f3"
+    else:
+        d = "b10992a74a98b63f00fba3e489c0dcd4bfbefc93884b7adb823f890649e08558"
+    assert printed_digest == d
+
+
+def test_main_create_match_digest(monkeypatch, basedir):
+    monkeypatch.setattr("sys.stderr", Mock())
+    os.chdir(basedir)
+    m = "0000000000000000000000000000000000000000000000000000000000000001"
+    retcode = main(_args=_get_args(_args_list=["-m", m, "Test.zip", "Test"]))
+    assert retcode == 1
+
+
 def test_dunzip_extract(monkeypatch, basedir):
     monkeypatch.setattr("sys.exit", Mock())
     os.chdir(basedir)
+    create_zipfile("Test.zip", "Test")
     args = _get_args(extract=True, _args_list=["Test.zip", "DunzipDirectory"])
     dunzip(_args=args)
     assert os.path.exists("DunzipDirectory")
