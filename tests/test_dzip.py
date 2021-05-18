@@ -251,3 +251,7 @@ def test_dunzip_extract(monkeypatch, basedir):
     args = _get_args(extract=True, _args_list=["Test.zip", "DunzipDirectory"])
     dunzip(_args=args)
     assert os.path.exists("DunzipDirectory")
+
+
+def test___main__():
+    assert __main__ is not None
